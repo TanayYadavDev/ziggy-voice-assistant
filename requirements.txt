@@ -1,0 +1,7 @@
+openai>=1.0.0
+python-dotenv>=1.0.0
+sounddevice>=0.4.6
+numpy>=1.26.0
+pyttsx3>=2.90
+faster-whisper>=1.0.0   # local STT (optional lekin recommended)
+openwakeword>=0.6.0     # wake word (optional; bina iske push-to-talk chalega)
