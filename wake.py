@@ -1,36 +1,66 @@
-"""Wake word — 'ziggy' sunte hi jaag jao.
+"""Wake word — 'ziggy' sunte hi jaag jao, hands-free.
 
-Abhi: push-to-talk (Enter dabao). Zero dependency, pehle din se kaam karega.
-Phase 2: openwakeword/Porcupine mein custom 'ziggy' wake-word model lagana
-hai — neeche TODO dekho.
+Providers (WAKE_PROVIDER in .env):
+  - porcupine : real always-on detection via Picovoice Porcupine.
+                100% on-device, no audio leaves the laptop.
+                Setup: free account at console.picovoice.ai -> train the
+                "ziggy" wake word -> download the .ppn file -> set
+                PICOVOICE_ACCESS_KEY + PORCUPINE_KEYWORD_PATH in .env.
+  - push      : push-to-talk fallback (press Enter). Default, zero setup.
 """
+import os
+
 import numpy as np
 import sounddevice as sd
 
 
 class WakeWord:
-    def __init__(self, word="ziggy"):
-        self.word = word
-        self.available = False
-        try:
-            from openwakeword.model import Model
-            self.oww = Model()  # built-in models auto-download hote hain
-            self.available = True
-            print("Wake-word model ready hai.")
-        except Exception as e:
-            print(f"openwakeword nahi mila ({e}) — push-to-talk mode (Enter dabao).")
+    def __init__(self, cfg):
+        self.provider = cfg.wake_provider
+        self.word = cfg.wake_word
+        self._porcupine = None
+
+        if self.provider == "porcupine":
+            import pvporcupine
+            if not cfg.picovoice_access_key:
+                raise RuntimeError(".env mein PICOVOICE_ACCESS_KEY missing hai "
+                                   "(console.picovoice.ai se free mein milti hai)")
+            if not os.path.exists(cfg.porcupine_keyword_path):
+                raise RuntimeError(
+                    f"Wake-word model file nahi mili: {cfg.porcupine_keyword_path}\n"
+                    "console.picovoice.ai par 'ziggy' train karke .ppn download karo "
+                    "aur repo folder mein rakho (README mein steps hain).")
+            self._porcupine = pvporcupine.create(
+                access_key=cfg.picovoice_access_key,
+                keyword_paths=[cfg.porcupine_keyword_path],
+                sensitivities=[cfg.wake_sensitivity],
+            )
+            print(f"Wake word '{self.word}' armed "
+                  f"(Porcupine, sensitivity {cfg.wake_sensitivity}).")
+        else:
+            print(f"Wake word: push-to-talk mode "
+                  f"('{self.word}' ke liye Enter dabao).")
 
     def wait(self) -> bool:
-        """Tab tak block karo jab tak wake word na sunai de. Returns True."""
-        if not self.available:
+        """Block until the wake word is heard. Returns True."""
+        if self._porcupine is None:
             input(f"\n[{self.word.upper()} se baat karne ke liye Enter dabao...] ")
             return True
-        # TODO (Phase 2): custom 'ziggy' wake-word model ka mic loop:
-        #   - openwakeword ke liye custom model train karna padega, ya
-        #   - Porcupine (Picovoice) mein custom keyword 'ziggy' banao — free tier mein hota hai
-        #   - 16kHz mono stream se chunks lo, score > threshold par return True
-        #   Exact API docs/examples se verify kar lena.
-        raise NotImplementedError(
-            "wake-word mic loop abhi baaki hai — README ka Phase 2 dekho. "
-            "Tab tak openwakeword uninstall karke push-to-talk use karo."
-        )
+
+        p = self._porcupine
+        print(f"😴 '{self.word}' ka intezaar... (Ctrl+C se band karo)")
+        with sd.InputStream(samplerate=p.sample_rate, channels=1,
+                            dtype="int16") as stream:
+            while True:
+                pcm, _ = stream.read(p.frame_length)
+                pcm = np.asarray(pcm, dtype=np.int16).flatten()
+                if len(pcm) != p.frame_length:
+                    continue
+                if p.process(pcm) >= 0:
+                    print(f"⚡ '{self.word}' suna!")
+                    return True
+
+    def close(self):
+        if self._porcupine is not None:
+            self._porcupine.delete()
+            self._porcupine = None

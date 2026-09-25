@@ -21,6 +21,12 @@ class Config:
     language: str = field(default_factory=lambda: os.getenv("LANGUAGE", "hi"))  # hi = Hinglish mode
     tts_rate: int = field(default_factory=lambda: int(os.getenv("TTS_RATE", "175")))
 
+    # --- Wake word (Phase 2) ---
+    wake_provider: str = field(default_factory=lambda: os.getenv("WAKE_PROVIDER", "push"))  # push | porcupine
+    picovoice_access_key: str = field(default_factory=lambda: os.getenv("PICOVOICE_ACCESS_KEY", ""))
+    porcupine_keyword_path: str = field(default_factory=lambda: os.getenv("PORCUPINE_KEYWORD_PATH", "ziggy.ppn"))
+    wake_sensitivity: float = field(default_factory=lambda: float(os.getenv("WAKE_SENSITIVITY", "0.5")))
+
     # --- Memory ---
     memory_file: str = field(default_factory=lambda: os.getenv("MEMORY_FILE", "memory.jsonl"))
     max_history_turns: int = field(default_factory=lambda: int(os.getenv("MAX_HISTORY_TURNS", "12")))

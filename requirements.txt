@@ -4,4 +4,4 @@ sounddevice>=0.4.6
 numpy>=1.26.0
 pyttsx3>=2.90
 faster-whisper>=1.0.0   # local STT (optional lekin recommended)
-openwakeword>=0.6.0     # wake word (optional; bina iske push-to-talk chalega)
+pvporcupine>=3.0.0      # wake-word engine (optional; sirf WAKE_PROVIDER=porcupine par chahiye)

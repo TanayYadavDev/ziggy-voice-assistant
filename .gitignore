@@ -6,3 +6,4 @@ venv/
 memory.jsonl
 *.wav
 *.mp3
+*.ppn

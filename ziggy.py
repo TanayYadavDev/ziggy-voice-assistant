@@ -29,7 +29,7 @@ def main():
     brain = Brain(cfg, memory)   # yahan .env check hota hai — key nahi to error
     mouth = Mouth(cfg)
     ears = None if args.text else Ears(cfg)
-    wake = None if args.text else WakeWord(cfg.wake_word)
+    wake = None if args.text else WakeWord(cfg)
 
     mouth.speak("Ziggy online. Bolo Tanay, kya kaam hai?")
 
@@ -46,6 +46,8 @@ def main():
                 continue
             if user_text.lower() in STOP_WORDS:
                 mouth.speak("Theek hai, main yahin hun jab zaroorat ho. Bye!")
+                if wake:
+                    wake.close()
                 break
 
             answer = brain.reply(user_text)
@@ -53,6 +55,8 @@ def main():
 
         except KeyboardInterrupt:
             print("\nBand ho raha hun. Bye! 👋")
+            if wake:
+                wake.close()
             break
 
 

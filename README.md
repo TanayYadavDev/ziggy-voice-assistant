@@ -13,7 +13,7 @@ API tokens are consumed only while you're actively talking.
 
 ## ✨ Features
 
-- **Wake-word activation** — always listening locally, wakes on "ziggy"
+- **Wake-word activation** — Porcupine-powered on-device "ziggy" detection (push-to-talk fallback included)
 - **Speech-to-text** — local Whisper (tiny), auto-detects Hindi & English, works offline
 - **Conversational brain** — powered by Muse Spark via the Meta Model API
 - **Text-to-speech** — offline voice output, no API key needed
@@ -43,7 +43,7 @@ API tokens are consumed only while you're actively talking.
 
 | Component | Role | Cost |
 |---|---|---|
-| `wake.py` | Local wake-word detection | Free |
+| `wake.py` | Wake-word detection (Porcupine, or push-to-talk) | Free |
 | `ears.py` | Speech → text (Whisper tiny, CPU) | Free, offline |
 | `brain.py` | Reasoning & replies (Muse Spark) | ~10–15k tokens / hour of active chat |
 | `mouth.py` | Text → speech | Free, offline |
@@ -83,6 +83,21 @@ All settings live in `.env` (copy from `.env.example`):
 | `META_BASE_URL` | API base URL from the Meta Model API docs |
 | `BRAIN_MODEL` | Model ID from the Meta Model API docs |
 | `WAKE_WORD` | Wake word (default: `ziggy`) |
+| `WAKE_PROVIDER` | `push` (press Enter, default) or `porcupine` (hands-free) |
+| `PICOVOICE_ACCESS_KEY` | Free key from [console.picovoice.ai](https://console.picovoice.ai) |
+| `PORCUPINE_KEYWORD_PATH` | Path to your trained `.ppn` file (default: `ziggy.ppn`) |
+| `WAKE_SENSITIVITY` | Detection sensitivity 0–1 (default: `0.5`; higher = fewer misses, more false alarms) |
+
+### 🎯 Train your "ziggy" wake word (5 minutes, free)
+
+1. Sign up at [console.picovoice.ai](https://console.picovoice.ai) (free tier, no credit card)
+2. Go to **Porcupine → Train Wake Word**, type `ziggy`, pick your platform
+   (Windows / Linux — match the machine Ziggy runs on), and train (~30 seconds, no recording needed)
+3. Download the `.ppn` file, rename it to `ziggy.ppn`, place it in the project folder
+4. Copy your **Access Key** from the console into `.env` as `PICOVOICE_ACCESS_KEY`
+5. Set `WAKE_PROVIDER=porcupine` in `.env` and run `python ziggy.py`
+
+Detection runs 100% on-device — no audio ever leaves your laptop.
 | `STT_PROVIDER` | `local` (Whisper) or `meta` (Meta voice-transcribe API) |
 | `TTS_RATE` | Speech rate for TTS output |
 
@@ -95,7 +110,7 @@ ziggy-voice-assistant/
 ├── brain.py         # LLM client (Meta Model API, OpenAI-compatible)
 ├── ears.py          # microphone capture + speech-to-text
 ├── mouth.py         # text-to-speech output
-├── wake.py          # wake-word detection (push-to-talk fallback for now)
+├── wake.py          # wake-word detection (Porcupine hands-free / push-to-talk)
 ├── memory.py        # conversation log + context recall
 ├── requirements.txt
 ├── .env.example     # configuration template (no secrets)
@@ -105,7 +120,7 @@ ziggy-voice-assistant/
 ## 🗺️ Roadmap
 
 - **Phase 1** — Text mode + push-to-talk voice loop ✅
-- **Phase 2** — True hands-free wake word (custom "ziggy" model via training or Porcupine keyword)
+- **Phase 2** — True hands-free wake word via Porcupine ✅ (code done — train your keyword, steps above)
 - **Phase 3** — Tool use: tell the time, set reminders, control the laptop
 - **Phase 4** — Meta `muse-voice-transcribe` as the STT backend (higher accuracy)
 - **Phase 5** — Neural TTS (e.g. edge-tts) for a more natural Hindi voice
