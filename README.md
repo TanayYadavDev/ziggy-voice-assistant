@@ -73,6 +73,26 @@ Say **"band karo"** (or press Ctrl+C) to shut down.
 
 > On Linux, if text-to-speech fails: `sudo apt install espeak`
 
+### 💸 Run 100% free & offline (no API, no billing)
+
+Ziggy ka brain OpenAI-compatible hai — isliye API ki jagah laptop ke andar
+chalti local model bhi laga sakte ho. Zero cost, zero billing risk, internet
+bhi nahi chahiye:
+
+1. [Ollama](https://ollama.com) install karo (Windows/macOS/Linux)
+2. Model download karo (ek baar, ~2 GB): `ollama pull qwen2.5:3b`
+3. `.env` mein ye values daalo:
+   ```
+   META_API_KEY=ollama
+   META_BASE_URL=http://localhost:11434/v1
+   BRAIN_MODEL=qwen2.5:3b
+   ```
+4. `python ziggy.py --text` — bas!
+
+Note: 3B local model Muse Spark jitna smart nahi hoga — jawab thode saral
+aayenge. Agar slow lage to `qwen2.5:1.5b` try karo. Poora stack (STT + brain
++ TTS + wake word) local hone ke baad Ziggy ka kharcha literally ₹0 hai.
+
 ## ⚙️ Configuration
 
 All settings live in `.env` (copy from `.env.example`):
